@@ -14,6 +14,5 @@ A web-based inventory, billing, and supplier management platform built with Djan
 - **Product Labels:** Generate and print barcode labels with company logo, product info, and price.
 - **Reports:** Top-selling products, sales stats, and CSV export.
 - **Print/Download:** PDF bills and CSV exports for products, suppliers, and transactions.
-- **Mobile-friendly:** Responsive UI, installable as a PWA (Progressive Web App) for easy use on mobile.
 
 If you want to know how to clone this , Ping me : My linkedIn handle: https://www.linkedin.com/in/priyadharshini-ramachandran-535903217/
