@@ -1,0 +1,48 @@
+{% extends "inventory/base.html" %}
+{% load bill_extras %}
+
+{% block content %}
+<div class="company-header">
+  <h1>COMPANY Name</h1>
+  <p>Details of the company</p>
+  <p>Company Address</p>
+</div>
+
+<h2>All Bills</h2>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Customer</th>
+      <th>Mobile</th>
+      <th>Manager(s)</th>
+      <th>Date</th>
+      <th>Total</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for bill in bills %}
+    <tr>
+      <td>{{ bill.id }}</td>
+      <td>{{ bill.customer_name }}</td>
+      <td>{{ bill.customer_mobile }}</td>
+      <td>{{ bill.project_manager }}</td>
+      <td>{{ bill.created_at|date:"M. d, Y, h:i a" }}</td>
+      <td>{{ bill.total_amount }}</td>
+      <td>
+        <a href="{% url 'bill_detail' bill.id %}" class="btn btn-info btn-sm">View</a>
+        <a href="{% url 'generate_bill_pdf' bill.id %}" target="_blank" class="btn btn-secondary btn-sm">PDF</a>
+        <a href="https://wa.me/91{{ bill.customer_mobile }}?text={{ bill|get_bill_message }}" target="_blank" class="btn btn-success btn-sm">WhatsApp</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7">No bills available.</td></tr>
+    {% endfor %}
+  </tbody>
+
+</table>
+
+{% endblock %}

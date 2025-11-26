@@ -1,0 +1,394 @@
+{% extends "inventory/base.html" %}
+{% load bill_extras %}
+{% block title %}BEST INTERIORS{% endblock %}
+{% block content %}
+
+<ul class="nav nav-tabs" id="mainTabs" role="tablist">
+  <li class="nav-item"><button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button">Products</button></li>
+  <li class="nav-item"><button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button">Billing</button></li>
+  <li class="nav-item"><button class="nav-link" id="stock-tab" data-bs-toggle="tab" data-bs-target="#stock" type="button">Stock Summary</button></li>
+  <li class="nav-item"><button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button">Reports</button></li>
+  <li class="nav-item"><button class="nav-link" id="suppliers-tab" data-bs-toggle="tab" data-bs-target="#suppliers" type="button">Suppliers</button></li>
+  <li class="nav-item"><button class="nav-link" id="bills-tab" data-bs-toggle="tab" data-bs-target="#bills" type="button">Bills</button></li>
+</ul>
+
+<div class="mb-4 p-3 border rounded bg-light">
+  <h3>Company name Inventory</h3>
+  <p>Track your products, manage bills, and stay updated with your sales.</p>
+</div>
+
+<div class="tab-content mt-3">
+
+  <!-- Products Tab -->
+  <div class="tab-pane fade show active" id="products">
+    <h4>Add Product</h4>
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <div class="col-md-3">
+        <input type="text" name="name" class="form-control" placeholder="Name" required>
+      </div>
+      <div class="col-md-3">
+        <input type="number" name="price" class="form-control" placeholder="Price" step="0.01" required>
+      </div>
+      <div class="col-md-3">
+        <input type="number" name="stock" class="form-control" placeholder="Stock" required>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" name="product_submit" class="btn btn-primary w-100">Save Product</button>
+      </div>
+    </form>
+
+    <h4 class="mt-4">Existing Products</h4>
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Barcode</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.price }}</td>
+          <td>{{ p.stock }}</td>
+          <td>
+            {% if p.barcode_image %}
+              <img src="{{ p.barcode_image.url }}" alt="barcode" style="width:150px; height:auto;" />
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <td>
+  <a href="{% url 'print_product_label' p.id %}" target="_blank" class="btn btn-info btn-sm">Get Details</a>
+  <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#editModal{{ p.pk }}">Edit</button>
+  <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal{{ p.pk }}">Delete</button>
+</td>
+
+        </tr>
+        <!-- Edit Modal -->
+        <div class="modal fade" id="editModal{{ p.pk }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="edit_product_id" value="{{ p.pk }}">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit: {{ p.name }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <input type="text" name="edit_name" class="form-control mb-2" value="{{ p.name }}" required>
+                  <input type="number" name="edit_price" class="form-control mb-2" value="{{ p.price }}" required>
+                  <input type="number" name="edit_stock" class="form-control mb-2" value="{{ p.stock }}" required>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" name="edit_submit" class="btn btn-success">Save</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!-- Delete Modal -->
+        <div class="modal fade" id="deleteModal{{ p.pk }}" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="delete_product_id" value="{{ p.pk }}">
+                <div class="modal-header">
+                  <h5 class="modal-title">Delete Product</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <p>Are you sure you want to delete "{{ p.name }}"?</p>
+                </div>
+                <div class="modal-footer">
+                  <button type="submit" name="delete_submit" class="btn btn-danger">Delete</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="mt-4">
+      <h5>Product Data Backup & Export</h5>
+      <a href="{% url 'export_products_csv' %}" class="btn btn-outline-primary btn-sm mb-1">Download Product CSV</a>
+      <a href="{% url 'export_bills_csv' %}" class="btn btn-outline-secondary btn-sm mb-1">Download Bills CSV</a>
+      <a href="{% url 'export_suppliers_csv' %}" class="btn btn-outline-success btn-sm mb-1">Download Suppliers CSV</a>
+    </div>
+  </div>
+
+  <!-- Billing Tab -->
+  <div class="tab-pane fade" id="billing">
+    <h4>Create Bill</h4>
+    <form method="post">
+      {% csrf_token %}
+      <input type="text" name="customer_name" class="form-control mb-2" placeholder="Customer Name" required>
+      <input type="text" name="customer_mobile" class="form-control mb-2" placeholder="Mobile Number" required>
+      <textarea name="customer_address" class="form-control mb-2" placeholder="Address" rows="2" required></textarea>
+      <input type="text" name="project_manager" class="form-control mb-2" placeholder="Enter Project Manager(s), comma separated" required>
+      <div id="itemsWrapper">
+        <div class="row mb-2">
+          <div class="col-6">
+            <select name="product" class="form-select" required>
+              <option value="" selected disabled>--Select Product--</option>
+              {% for p in products %}
+                <option value="{{ p.id }}">{{ p.name }} (Stock: {{ p.stock }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-4">
+            <input type="number" name="quantity" class="form-control" min="1" value="1" required/>
+          </div>
+          <div class="col-2">
+            <button type="button" class="btn btn-danger removeItemBtn">Remove</button>
+          </div>
+        </div>
+      </div>
+      <button type="button" id="addItemBtn" class="btn btn-secondary mb-3">Add More Items</button>
+      <br/>
+      <button type="submit" name="billing_submit" class="btn btn-success">Create Bill</button>
+    </form>
+    <!-- Barcode Scanner for Billing -->
+    <div class="mt-4">
+      <h5>Scan Product Barcode to Add to Bill</h5>
+      <button class="btn btn-dark btn-sm" onclick="openScanner()">Scan Barcode</button>
+      <div id="barcodeScanner" style="display:none; max-width:320px; margin-top:10px;"></div>
+      <div id="scanResult" class="mt-2"></div>
+    </div>
+  </div>
+
+  <!-- Bills Tab -->
+  <div class="tab-pane fade" id="bills">
+    <h4>All Bills</h4>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer Name</th>
+          <th>Mobile</th>
+          <th>Manager(s)</th>
+          <th>Date</th>
+          <th>Total</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bill in bills %}
+        <tr>
+          <td>{{ bill.id }}</td>
+          <td>{{ bill.customer_name }}</td>
+          <td>{{ bill.customer_mobile }}</td>
+          <td>{{ bill.project_manager }}</td>
+          <td>{{ bill.created_at|date:"M. d, Y, h:i a" }}</td>
+          <td>{{ bill.total_amount }}</td>
+          <td>
+            <a href="{% url 'bill_detail' bill.id %}" class="btn btn-info btn-sm">View</a>
+            <a href="{% url 'generate_bill_pdf' bill.id %}" target="_blank" class="btn btn-secondary btn-sm">PDF</a>
+            <a href="https://wa.me/91{{ bill.customer_mobile }}?text={{ bill|get_bill_message }}" target="_blank" class="btn btn-success btn-sm">WhatsApp</a>
+            <a href="{% url 'bill_detail' bill.id %}?print=1" class="btn btn-primary btn-sm" target="_blank">Print</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">No bills available.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Stock Summary Tab -->
+  <div class="tab-pane fade" id="stock">
+    <h4>Stock Summary</h4>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Current Stock</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.stock }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Reports Tab -->
+  <div class="tab-pane fade" id="reports">
+    <h4>Reports</h4>
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card text-white bg-primary mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Total Sales</h5>
+            <p class="card-text">{{ total_sales }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-white bg-success mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Total Products</h5>
+            <p class="card-text">{{ products|length }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-white bg-warning mb-3">
+          <div class="card-body">
+            <h5 class="card-title">Total Stock</h5>
+            <p class="card-text">{{ total_stock }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <h5>Top Selling Products</h5>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Quantity Sold</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sp in sales_per_product %}
+        <tr>
+          <td>{{ sp.product__name }}</td>
+          <td>{{ sp.total_sold }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="2">No sales data available.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Suppliers Tab -->
+  <div class="tab-pane fade" id="suppliers">
+    <h4>Supplier Management</h4>
+    <form method="post" class="row g-3 mb-2">
+      {% csrf_token %}
+      <input type="text" name="supplier_name" class="form-control col-md-3" placeholder="Supplier Name" required>
+      <input type="text" name="supplier_contact" class="form-control col-md-2" placeholder="Contact">
+      <input type="text" name="project_name" class="form-control col-md-2" placeholder="Project Name" required>
+      <input type="text" name="product" class="form-control col-md-2" placeholder="Product" required>
+      <input type="number" name="quantity" class="form-control col-md-1" placeholder="Qty" min="1" required>
+      <input type="number" name="amount" class="form-control col-md-1" placeholder="Amount" step="0.01" min="1" required>
+      <input type="number" name="total_budget" class="form-control col-md-2" placeholder="Total Project Budget" step="0.01" min="1" required>
+      <button type="submit" name="supplier_submit" class="btn btn-primary col-md-1">Add Supplier</button>
+    </form>
+
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Contact</th>
+          <th>Project Name</th>
+          <th>Product</th>
+          <th>Qty</th>
+          <th>Amount</th>
+          <th>Total Budget</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sup in suppliers %}
+        <tr>
+          <td>{{ sup.name }}</td>
+          <td>{{ sup.contact }}</td>
+          <td>{{ sup.project_name }}</td>
+          <td>{{ sup.product }}</td>
+          <td>{{ sup.quantity }}</td>
+          <td>{{ sup.amount }}</td>
+          <td>{{ sup.total_budget }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7">No suppliers added yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+// Barcode Scanner Integration for Billing
+function openScanner() {
+  const scannerElem = document.getElementById("barcodeScanner");
+  scannerElem.style.display = "block";
+  let html5QrcodeScanner = new Html5Qrcode("barcodeScanner");
+  html5QrcodeScanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    function(decodedText, decodedResult) {
+      html5QrcodeScanner.stop();
+      scannerElem.style.display = "none";
+      fetch(`/api/get-product-by-barcode/?code=${encodeURIComponent(decodedText)}`)
+      .then(res => res.json())
+      .then(data => {
+        if(data.id){
+          document.getElementById('scanResult').innerText = `Scanned: ${data.name} (₹${data.price}, Stock: ${data.stock})`;
+          addProductToBillingForm(data.id, data.name, data.price, data.stock);
+        } else {
+          document.getElementById('scanResult').innerText = `Not found for barcode: ${decodedText}`;
+        }
+      });
+    }
+  );
+}
+
+function addProductToBillingForm(productId, name, price, stock) {
+  const wrapper = document.getElementById('itemsWrapper');
+  const lastItem = wrapper.lastElementChild;
+  const select = lastItem.querySelector('select[name="product"]');
+  select.value = productId;
+  const qtyInput = lastItem.querySelector('input[name="quantity"]');
+  qtyInput.value = 1;
+  qtyInput.focus();
+  // Add a new empty row for the next scan
+  document.getElementById('addItemBtn').click();
+}
+</script>
+
+<script>
+// Dynamic Add/Remove Billing Rows
+document.getElementById('addItemBtn').addEventListener('click', function(){
+  const wrapper = document.getElementById('itemsWrapper');
+  const firstItem = wrapper.firstElementChild.cloneNode(true);
+  firstItem.querySelector('select').selectedIndex = 0;
+  firstItem.querySelector('input[name="quantity"]').value = 1;
+  wrapper.appendChild(firstItem);
+});
+document.getElementById('itemsWrapper').addEventListener('click', function(e){
+  if(e.target.classList.contains('removeItemBtn')){
+    const items = document.querySelectorAll('#itemsWrapper > div');
+    if(items.length > 1){
+      e.target.closest('div.row').remove();
+    } else {
+      alert('At least one item is required');
+    }
+  }
+});
+</script>
+
+<footer class="bg-light text-center text-muted py-3 mt-4">
+  &copy; {{ current_year }} Company name. All rights reserved. | COMPANY address
+  <!--<a href="company website link" target="_blank">Website</a> | -->
+</footer>
+{% endblock %}

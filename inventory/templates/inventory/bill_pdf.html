@@ -1,0 +1,96 @@
+{% load bill_extras %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #232323; }
+    .header-flex { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; padding-bottom: 8px; }
+    .logo-box img { width: 85px; margin-right: 28px; }
+    .company-info { text-align: right; }
+    .company-title { font-size: 24px; font-weight: bold; margin-bottom: 2px; }
+    .company-desc, .company-address { font-size: 13px; color: #444; }
+    .divider { border-top: 2px solid #b0b0b0; margin: 16px 0 14px 0; }
+    .section-title { text-align: center; font-size: 19px; font-weight: 600; margin: 8px 0 18px 0; letter-spacing: 2px; }
+    .bill-details {
+      border: 1px solid #e0e0e0; border-radius: 5px; background: #f9f9f9;
+      margin-bottom: 22px; padding: 18px;
+      display: grid; grid-template-columns: 140px 1fr;
+      row-gap: 10px; column-gap: 21px;
+      max-width: 650px; box-shadow: 0 0 7px #f0f0f0;
+    }
+    .bill-details-label { font-weight: 600; color: #333; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 18px; font-size: 15px; }
+    th, td { border: 1px solid #bbb; padding: 8px 10px; }
+    th { background: #f7f7f7; font-weight: bold; }
+    tr:nth-child(even) td { background: #f6fbff; }
+    .grand-total-row td { font-size: 17px; background: #dde7fa; font-weight: bold; }
+    .right { text-align: right; }
+    .footer-thank { font-size: 12px; text-align: center; margin-top: 16px; color: #666; }
+  </style>
+</head>
+
+<body>
+
+  <div class="header-flex">
+    <div class="logo-box">
+      <img src="data:image/png;base64,{{ logo_base64 }}" width="120"> <!-- Company Logo - Base64 Encoded -->
+
+
+
+
+    </div>
+
+    <div class="company-info">
+      <div class="company-title">Company name</div>
+      <div class="company-desc">Details of the company</div>
+      <div class="company-address">
+        Company Address
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section-title">Invoice</div>
+
+  <div class="bill-details">
+    <div class="bill-details-label">Bill #</div><div>{{ bill.id }}</div>
+    <div class="bill-details-label">Date</div><div>{{ bill.created_at|date:"M. d, Y, h:i a" }}</div>
+    <div class="bill-details-label">Customer</div><div>{{ bill.customer_name }}</div>
+    <div class="bill-details-label">Mobile</div><div>{{ bill.customer_mobile }}</div>
+    <div class="bill-details-label">Address</div><div>{{ bill.customer_address }}</div>
+
+    <div class="bill-details-label">Project Manager(s)</div>
+    <div>
+      {% for m in bill.project_manager|split_managers %}
+        • {{ m }}<br>
+      {% endfor %}
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Item</th><th>Qty</th><th>Rate</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.product.name }}</td>
+        <td class="right">{{ item.quantity }}</td>
+        <td class="right">{{ item.price }}</td>
+        <td class="right">{{ item.get_cost }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="grand-total-row">
+        <td colspan="3" class="right">Grand Total</td>
+        <td class="right">{{ bill.total_amount }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="footer-thank">Thank you for choosing us!</div>
+</body>
+</html>

@@ -1,0 +1,60 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>Print Product Label</title>
+<style>
+@media print { .no-print { display: none !important; } }
+
+.product-label {
+  border: 1px dashed #666;
+  max-width: 300px;
+  margin: 30px auto;
+  padding: 18px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.product-label img.logo {
+  width: 120px;
+  margin-bottom: 12px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.product-label img.barcode {
+  width: 170px;
+  margin-bottom: 10px;
+}
+
+h2 { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<div class="product-label">
+
+  <!-- Static Logo -->
+  <img src="{% static 'inventory/logo.png' %}" alt="Company Logo" class="logo">
+
+  <!-- Product Name -->
+  <h2>{{ product.name }}</h2>
+
+  <!-- Product Barcode Image -->
+  {% if product.barcode_image %}
+      <img src="{{ product.barcode_image.url }}" alt="Barcode" class="barcode">
+  {% endif %}
+
+  <!-- Price -->
+  <p><strong>Price:</strong> ₹{{ product.price }}</p>
+
+  <!-- Barcode Value -->
+  <p><strong>Barcode:</strong> {{ product.barcode_value }}</p>
+
+</div>
+
+<button class="no-print" onclick="window.print()">Print Label</button>
+
+</body>
+</html>
