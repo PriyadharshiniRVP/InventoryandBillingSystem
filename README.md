@@ -16,4 +16,3 @@ A web-based inventory, billing, and supplier management platform built with Djan
 - **Reports:** Top-selling products, sales stats, and CSV export.
 - **Print/Download:** PDF bills and CSV exports for products, suppliers, and transactions.
 
-## Demo
